@@ -63,7 +63,7 @@ root.title("Red Pitaya DIO Trigger")
 
 tk.Label(root, text="Red Pitaya IP").grid(row=0, column=0)
 ip_entry = tk.Entry(root)
-ip_entry.insert(0, "169.254.184.93")
+ip_entry.insert(0, "169.254.85.194")
 ip_entry.grid(row=0, column=1)
 
 tk.Label(root, text="DIO0_P pulse width ms").grid(row=1, column=0)
