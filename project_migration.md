@@ -20,11 +20,12 @@ The official RedPitaya-FPGA checkout should live outside the dao_tweezer reposit
 ## Reproducing the Vivado project
 
 1. Place the official RedPitaya-FPGA repository outside this repository.
-2. Run scripts/redpitaya/sync_to_redpitaya_build.ps1.
-3. Run `scripts/redpitaya/install_make.ps1` if `make` is not already installed on Windows.
-4. Run `scripts/redpitaya/build_project.ps1`.
-5. Open `RedPitaya-FPGA/prj/daotweezer_v1/project/redpitaya.xpr` in Vivado.
-6. If you want a local copy of the generated project for inspection, run `scripts/redpitaya/build_project.ps1 -MirrorLocalProject`. This mirrors into `_generated_project/`, which is not source of truth.
+2. If PowerShell blocks local scripts, run `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` in the current terminal before the helper scripts below. This only affects the current PowerShell session.
+3. Run scripts/redpitaya/sync_to_redpitaya_build.ps1.
+4. Run `scripts/redpitaya/install_make.ps1` if `make` is not already installed on Windows.
+5. Run `scripts/redpitaya/build_project.ps1`.
+6. Open `RedPitaya-FPGA/prj/daotweezer_v1/project/redpitaya.xpr` in Vivado.
+7. If you want a local copy of the generated project for inspection, run `scripts/redpitaya/build_project.ps1 -MirrorLocalProject`. This mirrors into `_generated_project/`, which is not source of truth.
 
 ## What should and should not be committed
 

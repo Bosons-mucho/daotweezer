@@ -135,6 +135,8 @@ if (-not $RedPitayaRepo) {
 }
 
 $ExternalProjectDir = Join-Path $RedPitayaRepo "prj\daotweezer_v1\project"
+$RequiredProjectIpTcl = Join-Path $RedPitayaRepo "prj\daotweezer_v1\ip\systemZ10.tcl"
+$RequiredProjectPsWrapper = Join-Path $RedPitayaRepo "prj\daotweezer_v1\rtl\red_pitaya_ps.sv"
 $LocalMirrorDir = Join-Path $MainRepoProject "_generated_project"
 
 if (-not (Test-Path $RedPitayaRepo)) {
@@ -143,6 +145,14 @@ if (-not (Test-Path $RedPitayaRepo)) {
 
 if (-not (Test-Path $MainRepoProject)) {
     throw "Main project source tree was not found at $MainRepoProject"
+}
+
+if (-not (Test-Path $RequiredProjectIpTcl)) {
+    throw "Required project IP TCL was not found at $RequiredProjectIpTcl. Run scripts\redpitaya\sync_to_redpitaya_build.ps1 before building."
+}
+
+if (-not (Test-Path $RequiredProjectPsWrapper)) {
+    throw "Required project RTL wrapper was not found at $RequiredProjectPsWrapper. Run scripts\redpitaya\sync_to_redpitaya_build.ps1 before building."
 }
 
 $vivadoBinDirectory = Resolve-VivadoBinDirectory

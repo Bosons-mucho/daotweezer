@@ -14,15 +14,22 @@ The design uses a simple register interface so software can set the pulse widths
 ## Quick start
 
 1. Clone the official RedPitaya-FPGA repository outside this repo, for example as a sibling folder next to dao_tweezer.
-2. Run [scripts/redpitaya/sync_to_redpitaya_build.ps1](scripts/redpitaya/sync_to_redpitaya_build.ps1) to copy only the custom project sources into the external `RedPitaya-FPGA/prj/daotweezer_v1` tree.
-3. Run [scripts/redpitaya/install_make.ps1](scripts/redpitaya/install_make.ps1) if `make` is not available on Windows.
-4. Run [scripts/redpitaya/build_project.ps1](scripts/redpitaya/build_project.ps1) to generate the full Vivado project in the external `RedPitaya-FPGA` checkout.
-5. Open `RedPitaya-FPGA/prj/daotweezer_v1/project/redpitaya.xpr` in Vivado and continue with synthesis, implementation, and bitstream generation as needed.
+2. If PowerShell blocks local scripts, run `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` in the current terminal before the helper scripts below. This only affects the current PowerShell session.
+3. Run [scripts/redpitaya/sync_to_redpitaya_build.ps1](scripts/redpitaya/sync_to_redpitaya_build.ps1) to copy the custom project sources and required IP TCL templates into the external `RedPitaya-FPGA/prj/daotweezer_v1` tree.
+4. Run [scripts/redpitaya/install_make.ps1](scripts/redpitaya/install_make.ps1) if `make` is not available on Windows.
+5. Run [scripts/redpitaya/build_project.ps1](scripts/redpitaya/build_project.ps1) to generate the full Vivado project in the external `RedPitaya-FPGA` checkout.
+6. Open `RedPitaya-FPGA/prj/daotweezer_v1/project/redpitaya.xpr` in Vivado and continue with synthesis, implementation, and bitstream generation as needed.
 
 ## Where the bitstream goes
 
 After successful implementation, the generated bitstream is written to:
 - `RedPitaya-FPGA/prj/daotweezer_v1/out/red_pitaya.bit`
+
+## If synthesis fails
+
+The most common cause is an incomplete sync into `RedPitaya-FPGA/prj/daotweezer_v1`. This project does not use only the custom `rtl/`, `sdc/`, and `patches/` files. It also depends on base Red Pitaya project files such as `ip/systemZ10.tcl` and `rtl/red_pitaya_ps.sv`. If those files are missing, Vivado may generate a project shell but fail later with errors such as `module 'red_pitaya_ps' not found`.
+
+If that happens, rerun [scripts/redpitaya/sync_to_redpitaya_build.ps1](scripts/redpitaya/sync_to_redpitaya_build.ps1) before rebuilding, and make sure you launched the script from a PowerShell session where local scripts are allowed for the current process.
 
 ## About make and the scripts
 
