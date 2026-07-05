@@ -19,6 +19,7 @@ The design uses a simple register interface so software can set the pulse widths
 4. Run [scripts/redpitaya/install_make.ps1](scripts/redpitaya/install_make.ps1) if `make` is not available on Windows.
 5. Run [scripts/redpitaya/build_project.ps1](scripts/redpitaya/build_project.ps1) to generate the full Vivado project in the external `RedPitaya-FPGA` checkout.
 6. Open `RedPitaya-FPGA/prj/daotweezer_v1/project/redpitaya.xpr` in Vivado and continue with synthesis, implementation, and bitstream generation as needed.
+7. If you make meaningful custom RTL or constraint changes in the external `RedPitaya-FPGA/prj/daotweezer_v1` tree, run [scripts/redpitaya/sync_from_redpitaya_build.ps1](scripts/redpitaya/sync_from_redpitaya_build.ps1) to copy the differences relative to `prj/v0.94` back into this repo and regenerate the `red_pitaya_top.patch` file.
 
 ## Where the bitstream goes
 
