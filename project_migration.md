@@ -2,7 +2,7 @@
 
 ## What changed
 
-The dao_tweezer repository now keeps only the essential custom Red Pitaya pulse-delay project sources under fpga/redpitaya_projects/daotweezer_v1 instead of tracking the entire embedded RedPitaya-FPGA repository.
+The dao_tweezer repository keeps only the essential custom Red Pitaya pulse-delay project sources under fpga/redpitaya_projects/daotweezer_v1 instead of tracking the entire embedded RedPitaya-FPGA repository or a full generated Vivado project.
 
 ## Preserved files
 
@@ -15,26 +15,28 @@ The following custom sources were preserved and copied into the new project tree
 
 ## Where the official repository should live
 
-The official RedPitaya-FPGA checkout should live outside the dao_tweezer repository, for example alongside it in a sibling directory, and the sync scripts will copy the project tree into RedPitaya-FPGA/prj/daotweezer_v1.
+The official RedPitaya-FPGA checkout should live outside the dao_tweezer repository, for example alongside it in a sibling directory, and the sync scripts will copy only the custom source folders into RedPitaya-FPGA/prj/daotweezer_v1.
 
 ## Reproducing the Vivado project
 
 1. Place the official RedPitaya-FPGA repository outside this repository.
 2. Run scripts/redpitaya/sync_to_redpitaya_build.ps1.
-3. Change into the external RedPitaya-FPGA checkout.
-4. Run `make project PRJ=daotweezer_v1 MODEL=Z10`.
-5. Open fpga/redpitaya_projects/daotweezer_v1/project/redpitaya.xpr in Vivado. The build helper mirrors the generated project into this local path.
+3. Run `scripts/redpitaya/install_make.ps1` if `make` is not already installed on Windows.
+4. Run `scripts/redpitaya/build_project.ps1`.
+5. Open `RedPitaya-FPGA/prj/daotweezer_v1/project/redpitaya.xpr` in Vivado.
+6. If you want a local copy of the generated project for inspection, run `scripts/redpitaya/build_project.ps1 -MirrorLocalProject`. This mirrors into `_generated_project/`, which is not source of truth.
 
 ## What should and should not be committed
 
 The following should be committed in dao_tweezer:
 
-- fpga/redpitaya_projects/daotweezer_v1/
+- fpga/redpitaya_projects/daotweezer_v1/rtl/
+- fpga/redpitaya_projects/daotweezer_v1/sdc/
+- fpga/redpitaya_projects/daotweezer_v1/patches/
 - software/python_gui/
 - scripts/redpitaya/
-- docs/redpitaya/
 
-Generated Vivado artifacts such as project/, out/, tmp/, .runs/, .cache/, .hw/, .ip_user_files/, .sim/, .gen/, .srcs/, and .data/ should not be committed.
+Generated Vivado artifacts such as project/, _generated_project/, out/, tmp/, .runs/, .cache/, .hw/, .ip_user_files/, .sim/, .gen/, .srcs/, and .data/ should not be committed.
 
 ## Notes on uncertainty
 

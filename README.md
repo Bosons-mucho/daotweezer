@@ -14,20 +14,21 @@ The design uses a simple register interface so software can set the pulse widths
 ## Quick start
 
 1. Clone the official RedPitaya-FPGA repository outside this repo, for example as a sibling folder next to dao_tweezer.
-2. Copy or sync the custom project tree from this repo into the RedPitaya-FPGA build tree if needed.
-3. Open the project file at [fpga/redpitaya_projects/daotweezer_v1/project/redpitaya.xpr](fpga/redpitaya_projects/daotweezer_v1/project/redpitaya.xpr) in Vivado.
-4. Run Synthesis, Implementation, and Generate Bitstream.
+2. Run [scripts/redpitaya/sync_to_redpitaya_build.ps1](scripts/redpitaya/sync_to_redpitaya_build.ps1) to copy only the custom project sources into the external `RedPitaya-FPGA/prj/daotweezer_v1` tree.
+3. Run [scripts/redpitaya/install_make.ps1](scripts/redpitaya/install_make.ps1) if `make` is not available on Windows.
+4. Run [scripts/redpitaya/build_project.ps1](scripts/redpitaya/build_project.ps1) to generate the full Vivado project in the external `RedPitaya-FPGA` checkout.
+5. Open `RedPitaya-FPGA/prj/daotweezer_v1/project/redpitaya.xpr` in Vivado and continue with synthesis, implementation, and bitstream generation as needed.
 
 ## Where the bitstream goes
 
 After successful implementation, the generated bitstream is written to:
-- [fpga/redpitaya_projects/daotweezer_v1/project/redpitaya.runs/impl_1/red_pitaya_top.bit](fpga/redpitaya_projects/daotweezer_v1/project/redpitaya.runs/impl_1/red_pitaya_top.bit)
+- `RedPitaya-FPGA/prj/daotweezer_v1/out/red_pitaya.bit`
 
 ## About make and the scripts
 
 - `make` can be used if your environment has the Red Pitaya build tools available.
-- The helper scripts in [scripts/redpitaya](scripts/redpitaya) are convenience scripts for syncing/building the project and are not required for Vivado itself.
-- The custom RTL and Python GUI sources live under [fpga/redpitaya_projects/daotweezer_v1](fpga/redpitaya_projects/daotweezer_v1) and [software/python_gui](software/python_gui).
+- The helper scripts in [scripts/redpitaya](scripts/redpitaya) are the intended workflow for syncing the compact source-only repo into the official Red Pitaya build repo and generating the full Vivado project there.
+- The custom RTL, constraints, and patch sources live under [fpga/redpitaya_projects/daotweezer_v1](fpga/redpitaya_projects/daotweezer_v1), while the Python GUI lives under [software/python_gui](software/python_gui).
 
 ## Practical use case
 

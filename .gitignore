@@ -3,6 +3,7 @@ RedPitaya-FPGA/
 
 # Vivado / build artefacts
 project/
+_generated_project/
 out/
 tmp/
 *.jou
@@ -23,13 +24,14 @@ tmp/
 *.bit.bin
 *.ltx
 
-# Keep the mirrored local Vivado project for daotweezer_v1 visible in the repo tree
-!fpga/redpitaya_projects/daotweezer_v1/project/
-!fpga/redpitaya_projects/daotweezer_v1/project/**
-!fpga/redpitaya_projects/daotweezer_v1/project/**/*.xpr
-
 # Keep project source folders tracked
 !fpga/redpitaya_projects/
 !software/python_gui/
 !scripts/redpitaya/
-!docs/redpitaya/
+!fpga/redpitaya_projects/daotweezer_v1/
+!fpga/redpitaya_projects/daotweezer_v1/rtl/
+!fpga/redpitaya_projects/daotweezer_v1/rtl/**
+!fpga/redpitaya_projects/daotweezer_v1/sdc/
+!fpga/redpitaya_projects/daotweezer_v1/sdc/**
+!fpga/redpitaya_projects/daotweezer_v1/patches/
+!fpga/redpitaya_projects/daotweezer_v1/patches/**
