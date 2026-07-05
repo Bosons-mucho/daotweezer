@@ -23,7 +23,7 @@ The official RedPitaya-FPGA checkout should live outside the dao_tweezer reposit
 2. Run scripts/redpitaya/sync_to_redpitaya_build.ps1.
 3. Change into the external RedPitaya-FPGA checkout.
 4. Run `make project PRJ=daotweezer_v1 MODEL=Z10`.
-5. Open prj/daotweezer_v1/project/redpitaya.xpr in Vivado.
+5. Open fpga/redpitaya_projects/daotweezer_v1/project/redpitaya.xpr in Vivado. The build helper mirrors the generated project into this local path.
 
 ## What should and should not be committed
 

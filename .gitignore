@@ -8,7 +8,6 @@ tmp/
 *.jou
 *.log
 *.str
-*.xpr
 *.runs/
 *.cache/
 *.hw/
@@ -23,6 +22,11 @@ tmp/
 *.bin
 *.bit.bin
 *.ltx
+
+# Keep the mirrored local Vivado project for daotweezer_v1 visible in the repo tree
+!fpga/redpitaya_projects/daotweezer_v1/project/
+!fpga/redpitaya_projects/daotweezer_v1/project/**
+!fpga/redpitaya_projects/daotweezer_v1/project/**/*.xpr
 
 # Keep project source folders tracked
 !fpga/redpitaya_projects/
