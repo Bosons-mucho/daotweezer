@@ -12,8 +12,18 @@ function Get-NormalizedRelativePath {
         [string]$FullPath
     )
 
-    $relativePath = [System.IO.Path]::GetRelativePath($RootPath, $FullPath)
-    return $relativePath -replace "\\", "/"
+    $resolvedRoot = (Resolve-Path -LiteralPath $RootPath).Path
+    $resolvedFull = (Resolve-Path -LiteralPath $FullPath).Path
+
+    if (-not $resolvedRoot.EndsWith("\")) {
+        $resolvedRoot = "$resolvedRoot\"
+    }
+
+    $rootUri = New-Object System.Uri($resolvedRoot)
+    $fullUri = New-Object System.Uri($resolvedFull)
+    $relativeUri = $rootUri.MakeRelativeUri($fullUri)
+
+    return [System.Uri]::UnescapeDataString($relativeUri.ToString())
 }
 
 function Test-FileContentEqual {
@@ -50,11 +60,10 @@ function Copy-CustomizedFilesFromReference {
         throw "Expected external source directory was not found: $ExternalDir"
     }
 
-    if (Test-Path $RepoDir) {
-        Remove-Item -LiteralPath $RepoDir -Recurse -Force
-    }
+    $repoParentDir = Split-Path $RepoDir -Parent
+    $tempRepoDir = Join-Path $repoParentDir ([System.IO.Path]::GetRandomFileName())
 
-    New-Item -ItemType Directory -Path $RepoDir -Force | Out-Null
+    New-Item -ItemType Directory -Path $tempRepoDir -Force | Out-Null
 
     $copiedFiles = New-Object System.Collections.Generic.List[string]
     $externalFiles = Get-ChildItem -LiteralPath $ExternalDir -Recurse -File
@@ -67,7 +76,7 @@ function Copy-CustomizedFilesFromReference {
             continue
         }
 
-        $repoFile = Join-Path $RepoDir ($relativePath -replace "/", "\")
+        $repoFile = Join-Path $tempRepoDir ($relativePath -replace "/", "\")
         $repoFileParent = Split-Path $repoFile -Parent
         if (-not (Test-Path $repoFileParent)) {
             New-Item -ItemType Directory -Path $repoFileParent -Force | Out-Null
@@ -77,6 +86,11 @@ function Copy-CustomizedFilesFromReference {
         $copiedFiles.Add($relativePath) | Out-Null
     }
 
+    if (Test-Path $RepoDir) {
+        Remove-Item -LiteralPath $RepoDir -Recurse -Force
+    }
+
+    Move-Item -LiteralPath $tempRepoDir -Destination $RepoDir
     return $copiedFiles
 }
 
@@ -110,18 +124,26 @@ function Write-RedPitayaTopPatch {
         New-Item -ItemType Directory -Path $patchParent -Force | Out-Null
     }
 
-    $oldLabel = "a/RedPitaya-FPGA/prj/v0.94/rtl/red_pitaya_top.sv"
-    $newLabel = "b/fpga/redpitaya_projects/daotweezer_v1/rtl/red_pitaya_top.sv"
-
     $patchOutput = & $gitCommand.Source diff --no-index --no-ext-diff --src-prefix=a/ --dst-prefix=b/ `
-        "--label=$oldLabel" "--label=$newLabel" `
         $ReferenceTopFile $CustomizedTopFile 2>&1
 
     if ($LASTEXITCODE -gt 1) {
         throw "Failed to regenerate patch file: $($patchOutput -join [Environment]::NewLine)"
     }
 
-    Set-Content -LiteralPath $PatchFile -Value $patchOutput
+    $patchedOutput = foreach ($line in $patchOutput) {
+        if ($line -like "--- a/*") {
+            "--- a/RedPitaya-FPGA/prj/v0.94/rtl/red_pitaya_top.sv"
+        }
+        elseif ($line -like "+++ b/*") {
+            "+++ b/fpga/redpitaya_projects/daotweezer_v1/rtl/red_pitaya_top.sv"
+        }
+        else {
+            $line
+        }
+    }
+
+    Set-Content -LiteralPath $PatchFile -Value $patchedOutput
 }
 
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
