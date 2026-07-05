@@ -1,0 +1,155 @@
+﻿diff --git a/RedPitaya-FPGA/prj/v0.94/rtl/red_pitaya_top.sv b/fpga/redpitaya_projects/daotweezer_v1/rtl/red_pitaya_top.sv
+index 15dac49..02d8809 100644
+--- a/RedPitaya-FPGA/prj/v0.94/rtl/red_pitaya_top.sv
++++ b/fpga/redpitaya_projects/daotweezer_v1/rtl/red_pitaya_top.sv
+@@ -465,6 +465,19 @@ ODDR oddr_dac_dat [14-1:0] (.Q(dac_dat_o), .D1(dac_dat_b), .D2(dac_dat_a), .C(da
+ ////////////////////////////////////////////////////////////////////////////////
+ //  House Keeping
+ ////////////////////////////////////////////////////////////////////////////////
++//led testing signals
++logic [8-1:0] hk_led_o;
++logic [26:0] led_demo_cnt;
++
++logic dio0_pulse; //pulse delay model output
++logic dio1_pulse; //pulse delay model output
++
++logic pulse_busy;
++logic pulse_done;
++logic pulse_start;
++logic [31:0] DIO0_pulse_width;
++logic [31:0] DIO1_pulse_width;
++logic [31:0] DELAY_pulse_width;
+ 
+ logic [DWE-1: 0] exp_p_in ,  exp_n_in ;
+ logic [DWE-1: 0] exp_p_out,  exp_n_out;
+@@ -483,7 +496,7 @@ red_pitaya_hk #(.DWE(DWE)) i_hk (
+   .frstn_i         (frstn[0]   ),  // reset - active low
+ 
+   // LED
+-  .led_o           (  led_o    ),  // LED output
++  .led_o           (  hk_led_o    ),  // LED output
+   // global configuration
+   .digital_loop    (digital_loop),
+   .daisy_mode_o    (daisy_mode),
+@@ -509,7 +522,62 @@ red_pitaya_hk #(.DWE(DWE)) i_hk (
+ ////////////////////////////////////////////////////////////////////////////////
+ // LED
+ ////////////////////////////////////////////////////////////////////////////////
++// ------------------------------------------------------------
++// Simple LED demo
++// LED0: always ON
++// LED1: always OFF
++// LED2: slow blink
++// LED3: inverse blink
++// LED4-LED7: keep original housekeeping LEDs
++// ------------------------------------------------------------
++always @(posedge adc_clk) begin
++  if (!adc_rstn) begin
++    led_demo_cnt <= 27'd0;
++  end else begin
++    led_demo_cnt <= led_demo_cnt + 1'b1;
++  end
++end
+ 
++assign led_o[0]   = 1'b1; //led0 always high 
++assign led_o[1]   = 1'b0;
++assign led_o[2]   = led_demo_cnt[26]; //26 digit of the cnt, would blink
++assign led_o[3]   = ~led_demo_cnt[26]; //would blink reverse
++assign led_o[7:4] = hk_led_o[7:4];
++
++///////////////////////////////////////////////////////////////////////////////
++//gpio for pulse delay module
++//////////////////////////////////////////////////////////////////////////////
++pulse_delay_demo i_pulse_delay_demo(
++.clk (adc_clk), 
++.rstn(adc_rstn), 
++.dio0_pulse(dio0_pulse), 
++.dio1_pulse(dio1_pulse),
++.dio0_pulse_width(DIO0_pulse_width),
++.dio1_pulse_width(DIO1_pulse_width),
++.delay_width(DELAY_pulse_width),
++.busy(pulse_busy),
++.done(pulse_done),
++.start(pulse_start)
++); //the signal in the bracket is the external one, those out of it is the internal one in the module
++
++pulse_delay_reg i_pulse_delay_reg(
++.clk (adc_clk),
++.rstn(adc_rstn),
++.sysw_en(sys[7].wen),
++.sysr_en(sys[7].ren),
++.sysr_data(sys[7].rdata),
++.sysw_data(sys[7].wdata),
++.sys_ack(sys[7].ack),
++.sys_err(sys[7].err),
++.sys_addr(sys[7].addr[19:0]),
++
++.busy(pulse_busy),
++.done(pulse_done),
++.dio0_pulse_width(DIO0_pulse_width),
++.dio1_pulse_width(DIO1_pulse_width),
++.delay_pulse_width(DELAY_pulse_width),
++.start_pulse(pulse_start)
++);
+ ////////////////////////////////////////////////////////////////////////////////
+ // GPIO
+ ////////////////////////////////////////////////////////////////////////////////
+@@ -528,11 +596,22 @@ assign exp_n_altd = {{DWE-8{1'b0}},   1'b1,   1'b1, 5'h0, 1'b1};
+ genvar GM;
+ generate
+ for(GM = 0 ; GM < DWE ; GM = GM + 1) begin : gpios
+-  assign exp_p_otr[GM] = exp_p_alt[GM] ? exp_p_altr[GM] : exp_p_out[GM];
+-  assign exp_n_otr[GM] = exp_n_alt[GM] ? exp_n_altr[GM] : exp_n_out[GM];
+-
+-  assign exp_p_dtr[GM] = exp_p_alt[GM] ? exp_p_altd[GM] : exp_p_dir[GM];
+-  assign exp_n_dtr[GM] = exp_n_alt[GM] ? exp_n_altd[GM] : exp_n_dir[GM];
++  if (GM == 0) begin: pulse_dio0_p     
++    assign exp_p_otr[GM] = dio0_pulse;  //assign dio0_p to be controlled by dio0_pulse
++    assign exp_p_dtr[GM] = 1'b1;    //output mode
++    assign exp_n_otr[GM] = exp_n_alt[GM] ? exp_n_altr[GM] : exp_n_out[GM];
++    assign exp_n_dtr[GM] = exp_n_alt[GM] ? exp_n_altd[GM] : exp_n_dir[GM];
++  end else if (GM == 1)begin: pulse_dio1_p       
++    assign exp_p_otr[GM] = dio1_pulse;    //assing dio1_p to be controlled by signal dio1_pulse
++    assign exp_p_dtr[GM] = 1'b1; //output mode
++    assign exp_n_otr[GM] = exp_n_alt[GM] ? exp_n_altr[GM] : exp_n_out[GM];
++    assign exp_n_dtr[GM] = exp_n_alt[GM] ? exp_n_altd[GM] : exp_n_dir[GM];
++  end else begin: normal_ep_p
++      assign exp_p_otr[GM] = exp_p_alt[GM] ? exp_p_altr[GM] : exp_p_out[GM];
++      assign exp_n_otr[GM] = exp_n_alt[GM] ? exp_n_altr[GM] : exp_n_out[GM];
++      assign exp_p_dtr[GM] = exp_p_alt[GM] ? exp_p_altd[GM] : exp_p_dir[GM];
++      assign exp_n_dtr[GM] = exp_n_alt[GM] ? exp_n_altd[GM] : exp_n_dir[GM];
++   end
+ end
+ endgenerate
+ 
+@@ -635,7 +714,7 @@ i_scope (
+ //  DAC arbitrary signal generator
+ ////////////////////////////////////////////////////////////////////////////////
+ 
+-
++/*
+ red_pitaya_asg i_asg (
+    // DAC
+   .dac_a_o         (asg_dat[0]  ),  // CH 1
+@@ -657,7 +736,12 @@ red_pitaya_asg i_asg (
+   .sys_err         (sys[2].err  ),
+   .sys_ack         (sys[2].ack  )
+ );
++*/ //removed asg units for timing 
++assign asg_dat[0] = '0;
++assign asg_dat[1] = '0;
++assign trig_asg_out = 1'b0;
+ 
++sys_bus_stub sys_bus_stub_2 (sys[2]);
+ ////////////////////////////////////////////////////////////////////////////////
+ //  MIMO PID controller
+ ////////////////////////////////////////////////////////////////////////////////
+@@ -772,7 +856,7 @@ red_pitaya_daisy  #(
+   `else
+   sys_bus_stub sys_bus_stub_6 (sys[6]);
+   `endif
+-  sys_bus_stub sys_bus_stub_7 (sys[7]);
++  //sys_bus_stub sys_bus_stub_7 (sys[7])
+ 
+ `else
+ IOBUF i_iobuf (.O(trig_ext), .IO(exp_p_io[0]), .I(1'b0), .T(1'b1) );

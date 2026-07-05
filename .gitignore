@@ -1,0 +1,31 @@
+# Ignore the embedded RedPitaya-FPGA checkout if it remains locally
+RedPitaya-FPGA/
+
+# Vivado / build artefacts
+project/
+out/
+tmp/
+*.jou
+*.log
+*.str
+*.xpr
+*.runs/
+*.cache/
+*.hw/
+*.ip_user_files/
+*.sim/
+*.srcs/
+*.gen/
+*.data/
+*.os/
+*.xsa
+*.bit
+*.bin
+*.bit.bin
+*.ltx
+
+# Keep project source folders tracked
+!fpga/redpitaya_projects/
+!software/python_gui/
+!scripts/redpitaya/
+!docs/redpitaya/
