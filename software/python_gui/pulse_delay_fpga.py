@@ -3,6 +3,11 @@ import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
+try:
+    import paramiko
+except ImportError:
+    paramiko = None
+
 
 # =========================
 # Red Pitaya register map
@@ -20,21 +25,78 @@ def int_to_hex32(value: int) -> str:
 
 
 class RedPitayaSSH:
-    def __init__(self, host: str, user: str = "root"):
+    def __init__(self, host: str, user: str = "root", password: str = ""):
         self.host = host
         self.user = user
+        self.password = password
 
     @property
     def target(self) -> str:
         return f"{self.user}@{self.host}"
 
+    def require_paramiko(self):
+        if paramiko is None:
+            raise RuntimeError(
+                "Password mode requires Paramiko. Install it with: py -m pip install paramiko"
+            )
+
+    def run_ssh_password(self, command: str) -> str:
+        self.require_paramiko()
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        try:
+            client.connect(
+                self.host,
+                username=self.user,
+                password=self.password,
+                look_for_keys=False,
+                allow_agent=False,
+                timeout=20,
+            )
+            stdin, stdout, stderr = client.exec_command(command, timeout=120)
+            exit_status = stdout.channel.recv_exit_status()
+            out = stdout.read().decode(errors="replace").strip()
+            err = stderr.read().decode(errors="replace").strip()
+        finally:
+            client.close()
+
+        if exit_status != 0:
+            raise RuntimeError(err or out)
+
+        return out
+
+    def scp_to_rp_password(self, local_path: str, remote_path: str) -> str:
+        self.require_paramiko()
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        try:
+            client.connect(
+                self.host,
+                username=self.user,
+                password=self.password,
+                look_for_keys=False,
+                allow_agent=False,
+                timeout=20,
+            )
+            sftp = client.open_sftp()
+            try:
+                sftp.put(local_path, remote_path)
+            finally:
+                sftp.close()
+        finally:
+            client.close()
+
+        return "Upload finished."
+
     def run_ssh(self, command: str) -> str:
+        if self.password:
+            return self.run_ssh_password(command)
         result = subprocess.run(
             ["ssh", self.target, command],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            timeout=20,
+            timeout=120,
         )
 
         if result.returncode != 0:
@@ -43,6 +105,8 @@ class RedPitayaSSH:
         return result.stdout.strip()
 
     def scp_to_rp(self, local_path: str, remote_path: str) -> str:
+        if self.password:
+            return self.scp_to_rp_password(local_path, remote_path)
         result = subprocess.run(
             ["scp", local_path, f"{self.target}:{remote_path}"],
             stdout=subprocess.PIPE,
@@ -57,7 +121,7 @@ class RedPitayaSSH:
         return result.stdout.strip()
 
     def load_fpga_fpgautil(self, remote_bitstream_path: str) -> str:
-        return self.run_ssh(f"fpgautil -b {remote_bitstream_path}")
+        return self.run_ssh(f"/opt/redpitaya/bin/fpgautil -b {remote_bitstream_path}")
 
     def load_fpga_overlay_custom(self, project_name: str, remote_bitstream_path: str) -> str:
         return self.run_ssh(
@@ -68,10 +132,10 @@ class RedPitayaSSH:
         return self.run_ssh(f"/opt/redpitaya/sbin/overlay.sh {project_name}")
 
     def monitor_write(self, address: int, value: int) -> str:
-        return self.run_ssh(f"monitor {int_to_hex32(address)} {int_to_hex32(value)}")
+        return self.run_ssh(f"/opt/redpitaya/bin/monitor {int_to_hex32(address)} {int_to_hex32(value)}")
 
     def monitor_read(self, address: int) -> int:
-        out = self.run_ssh(f"monitor {int_to_hex32(address)}")
+        out = self.run_ssh(f"/opt/redpitaya/bin/monitor {int_to_hex32(address)}")
 
         for token in out.replace("\n", " ").split():
             if token.startswith("0x") or token.startswith("0X"):
@@ -104,8 +168,9 @@ class PulseUI:
         self.root.title("Red Pitaya DIO Pulse Delay Controller")
 
         self.bitstream_path = tk.StringVar(value="")
-        self.host = tk.StringVar(value="rp-xxxxxx.local")
+        self.host = tk.StringVar(value="169.254.85.194")
         self.user = tk.StringVar(value="root")
+        self.password = tk.StringVar(value="")
         self.remote_path = tk.StringVar(value="/root/red_pitaya_top.bit.bin")
         self.overlay_project = tk.StringVar(value="v0.94")
 
@@ -130,6 +195,10 @@ class PulseUI:
 
         tk.Label(self.root, text="SSH user").grid(row=row, column=0, sticky="w")
         tk.Entry(self.root, textvariable=self.user, width=35).grid(row=row, column=1, sticky="we")
+        row += 1
+
+        tk.Label(self.root, text="SSH password").grid(row=row, column=0, sticky="w")
+        tk.Entry(self.root, textvariable=self.password, show="*", width=35).grid(row=row, column=1, sticky="we")
         row += 1
 
         tk.Label(self.root, text="Local bitstream").grid(row=row, column=0, sticky="w")
@@ -184,6 +253,7 @@ class PulseUI:
         return RedPitayaSSH(
             host=self.host.get().strip(),
             user=self.user.get().strip(),
+            password=self.password.get(),
         )
 
     def browse_bitstream(self):
