@@ -39,8 +39,7 @@ module pulse_delay_demo (
     localparam IDLE = 3'd0;
     localparam DIO0_HIGH = 3'd1;
     localparam DELAY = 3'd2;
-    localparam DIO1_HIGH = 3'd3;
-    localparam DONE = 3'd4;
+    localparam DIO1_HOLD = 3'd3;
     
     
     reg [2:0] state;
@@ -86,30 +85,24 @@ module pulse_delay_demo (
                         busy <= 1'b1;
                         done <= 1'b0;
                         if (counter == 0) begin
-                            state <=DIO1_HIGH;
-                            counter <= dio1_pulse_width - 32'd1;
+                            state <= DIO1_HOLD;
+                            counter <= 32'd0;
                         end else begin 
                             counter <= counter - 32'd1;
                         end
                 end
-                DIO1_HIGH:begin
+                DIO1_HOLD:begin
                             dio0_pulse <= 1'b0;
                             dio1_pulse <= 1'b1;
-                            busy <= 1'b1;
-                            done <= 1'b0;
-                            if (counter == 0 ) begin
-                                state <= DONE;
-                                counter <= 32'd1;
-                            end else begin
-                                counter <= counter - 32'd1;
+                            busy <= 1'b0;
+                            done <= 1'b1;
+                            counter <= 32'd0;
+                            if (start) begin
+                                state <= DIO0_HIGH;
+                                busy <= 1'b1;
+                                done <= 1'b0;
+                                counter <= dio0_pulse_width - 32'd1;
                             end
-                end
-                DONE: begin
-                        dio0_pulse <= 1'b0;
-                        dio1_pulse <= 1'b0;
-                        busy <= 1'b0;
-                        done <= 1'b1;
-                        state <= IDLE;
                 end
                 default:begin
                             dio0_pulse <= 1'b0;
