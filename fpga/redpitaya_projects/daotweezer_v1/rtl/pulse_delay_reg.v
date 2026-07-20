@@ -36,7 +36,8 @@ module pulse_delay_reg(
     output reg [31:0] dio1_pulse_width,
     output reg [31:0] dio0_pulse_width,
     output reg [31:0] delay_pulse_width,
-    output reg start_pulse
+    output reg start_pulse,
+    output reg clear_pulse
     );
     
     localparam CTRL = 20'h00000;
@@ -48,6 +49,7 @@ module pulse_delay_reg(
     always @(posedge clk) begin
         if (!rstn) begin
             start_pulse <= 1'b0;
+            clear_pulse <= 1'b0;
             dio1_pulse_width <= 32'd125000;
             dio0_pulse_width <= 32'd125000;
             delay_pulse_width <= 32'd1250000;
@@ -58,11 +60,14 @@ module pulse_delay_reg(
             sys_ack <= 1'b0;
             sys_err <= 1'b0;
             start_pulse <= 1'b0;
+            clear_pulse <= 1'b0;
                 if (sysw_en) begin //ps tries to write in data
                     sys_ack <= 1'b1;
                     case(sys_addr)
                         CTRL: begin 
-                            if (sysw_data[0]) begin
+                            if (sysw_data[1]) begin
+                                clear_pulse <= 1'b1;
+                            end else if (sysw_data[0]) begin
                                 if (!busy) begin
                                 start_pulse <= 1'b1;
                                 end else begin

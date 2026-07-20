@@ -72,6 +72,7 @@ logic [4-1:0] frstn;
 logic pulse_busy;
 logic pulse_done;
 logic pulse_start;
+logic pulse_clear;
 logic dio0_pulse;
 logic dio1_pulse;
 logic [31:0] dio0_pulse_width;
@@ -212,6 +213,7 @@ pulse_delay_demo i_pulse_delay_demo (
   .clk              (fclk[0]),
   .rstn             (frstn[0]),
   .start            (pulse_start),
+  .clear            (pulse_clear),
   .dio0_pulse_width (dio0_pulse_width),
   .dio1_pulse_width (dio1_pulse_width),
   .delay_width      (delay_pulse_width),
@@ -236,7 +238,8 @@ pulse_delay_reg i_pulse_delay_reg (
   .dio1_pulse_width  (dio1_pulse_width),
   .dio0_pulse_width  (dio0_pulse_width),
   .delay_pulse_width (delay_pulse_width),
-  .start_pulse       (pulse_start)
+  .start_pulse       (pulse_start),
+  .clear_pulse       (pulse_clear)
 );
 
 assign exp_p_io[0] = dio0_pulse;

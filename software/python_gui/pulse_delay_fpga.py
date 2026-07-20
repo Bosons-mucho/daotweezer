@@ -19,6 +19,9 @@ DIO0_W_ADDR = BASE_ADDR + 0x04
 DELAY_ADDR  = BASE_ADDR + 0x08
 DIO1_W_ADDR = BASE_ADDR + 0x0C
 
+CTRL_START = 0x1
+CTRL_CLEAR = 0x2
+
 
 def int_to_hex32(value: int) -> str:
     return f"0x{value:08X}"
@@ -159,7 +162,10 @@ class RedPitayaSSH:
         self.monitor_write(DIO1_W_ADDR, dio1_width)
 
     def trigger(self):
-        self.monitor_write(CTRL_ADDR, 1)
+        self.monitor_write(CTRL_ADDR, CTRL_START)
+
+    def clear_outputs(self):
+        self.monitor_write(CTRL_ADDR, CTRL_CLEAR)
 
 
 class PulseUI:
@@ -238,6 +244,7 @@ class PulseUI:
 
         tk.Button(self.root, text="Read status", command=self.read_status).grid(row=row, column=0, sticky="we")
         tk.Button(self.root, text="Set widths + Trigger", command=self.set_widths_and_trigger).grid(row=row, column=1, sticky="we")
+        tk.Button(self.root, text="Reset outputs", command=self.clear_outputs).grid(row=row, column=2, sticky="we")
         row += 1
 
         tk.Label(self.root, textvariable=self.status_text).grid(row=row, column=0, columnspan=3, sticky="w")
@@ -416,6 +423,20 @@ class PulseUI:
             )
 
         self.run_background("trigger", task)
+
+    def clear_outputs(self):
+        def task():
+            rp = self.rp()
+            rp.clear_outputs()
+
+            status_value, busy, done = rp.read_status()
+
+            return (
+                "Outputs reset successfully.\n"
+                f"CTRL={int_to_hex32(status_value)}, busy={busy}, done={done}"
+            )
+
+        self.run_background("reset outputs", task)
 
     def set_widths_and_trigger(self):
         def task():

@@ -24,6 +24,7 @@ module pulse_delay_demo (
     input wire clk,
     input wire rstn, 
     input wire start,
+    input wire clear,
     
     input wire [31:0] dio0_pulse_width,
     input wire [31:0] dio1_pulse_width,
@@ -47,6 +48,13 @@ module pulse_delay_demo (
     
     always @(posedge clk) begin
         if (!rstn) begin
+            state <= IDLE;
+            counter <= 32'd0;
+            dio0_pulse <= 1'b0;
+            dio1_pulse <= 1'b0;
+            busy <= 1'b0;
+            done <= 1'b0;
+        end else if (clear) begin
             state <= IDLE;
             counter <= 32'd0;
             dio0_pulse <= 1'b0;
