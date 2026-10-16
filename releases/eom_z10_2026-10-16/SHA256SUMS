@@ -1,0 +1,5 @@
+# SHA-256 checksums for file integrity verification; not a program.
+2d253bec452d68412edc98170034b6b4bce25449bd30cceac22d9d3850a938ff  README.md
+e8c4682660a426a1cf08c0e53853c722927d6e2f1c75a6322955b641947aebf9  eom_fpga_trigger_gui.py
+2b946952a3ab5332d5f75d94536861a584975614b76d76e6df7773c3de9788db  red_pitaya_top.bit.bin
+9714cb946c1a2043f6e097830c2d817fb1c1314d99b68d497a6724f1c71b1037  test_eom_fpga_trigger_gui.py
